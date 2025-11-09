@@ -125,6 +125,14 @@
             border-radius: 8px;
         }
 
+        .gift-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
         .pizza-menu {
             max-height: 500px;
             overflow-y: auto;
@@ -309,13 +317,21 @@
                             <span><strong>Pizza Time:</strong> Order from Sotto Pizzeria Helsinki (menu below!)</span>
                         </div>
                         <div class="plan-item">
-                            <span style="font-size: 1.5rem;">🍷</span>
-                            <span><strong>I'm providing:</strong> Starters & drinks - get ready to party!</span>
+                            <span style="font-size: 1.5rem;">🥨</span>
+                            <span><strong>I'm providing:</strong> Starters, snacks, and some mysterious drinks!</span>
+                        </div>
+                        <div class="plan-item">
+                            <span style="font-size: 1.5rem;">🍺</span>
+                            <span><strong>BYOB:</strong> Feel free to bring your own alcohol if you want!</span>
                         </div>
                         <div class="plan-item">
                             <span style="font-size: 1.5rem;">❤️</span>
                             <span><strong>Payment:</strong> I'll order everything together, but pizzas are split - you pay for yours!</span>
                         </div>
+                    </div>
+
+                    <div class="gift-box">
+                        <p style="font-weight: 600; color: #1e40af;">🎁 Please NO GIFTS! Your presence is the present! Just bring yourself and good vibes! 💙</p>
                     </div>
 
                     <div class="warning-box">
@@ -330,7 +346,7 @@
                 <div class="card">
                     <h2>🍕 Sotto Pizzeria Menu</h2>
                     <div class="pizza-menu" id="pizzaMenu"></div>
-                    <p style="color: #9ca3af; font-size: 0.9rem; margin-top: 15px;">🌱 = Available vegan</p>
+                    <p style="color: #9ca3af; font-size: 0.9rem; margin-top: 15px;">🌱 = Vegan option</p>
                 </div>
 
                 <!-- Order Form and Guest List -->
@@ -368,19 +384,33 @@
     </div>
 
     <script>
-        const CORRECT_PASSWORD = 'pizza2025'; // Change this!
+        // Password is stored as SHA-256 hash for security
+        // To change password: use an online SHA-256 generator with your desired password
+        // Current password hash is for: "pizza2025"
+        const PASSWORD_HASH = '851b033199401f9b5f0e7ac761177aff0eb2b068da2681a4a29fddfec211f61a';
         
         const pizzaMenu = [
-            { name: 'Margherita', desc: 'Tomaattikastike, mozzarella, basilika, oliiviöljy', price: '€5', vegan: true },
+            { name: 'Margherita', desc: 'Tomaattikastike, mozzarella, basilika, oliiviöljy', price: '€5' },
+            { name: 'Margherita (Vegan)', desc: 'Tomaattikastike, vegan mozzarella, basilika, oliiviöljy', price: '€5', vegan: true },
             { name: 'Margherita DOP', desc: 'Tomaattikastike, mozzarella di bufala, basilika, oliiviöljy', price: '€7' },
             { name: 'Pepperoni', desc: 'Tomaattikastike, pepperoni, mozzarella, basilika, oliiviöljy', price: '€7' },
-            { name: 'Parmigiana', desc: 'Tomaattikastike, grillattu munakoiso, mozzarella, parmesaani, rucola, oliiviöljy', price: '€7', vegan: true },
+            { name: 'Parmigiana', desc: 'Tomaattikastike, grillattu munakoiso, mozzarella, parmesaani, rucola, oliiviöljy', price: '€7' },
+            { name: 'Parmigiana (Vegan)', desc: 'Tomaattikastike, grillattu munakoiso, vegan mozzarella, vegan parmesaani, rucola, oliiviöljy', price: '€7', vegan: true },
             { name: 'Diavola', desc: "Tomaattikastike, 'nduja-makkara, mozzarella, parmesaani, chiliöljy, basilika", price: '€8' },
-            { name: 'ai Funghi', desc: 'Mozzarella, herkkusieni, portobello, parmesaani, mustapippuri, rucola, tryffeliöljy', price: '€8', vegan: true },
+            { name: 'ai Funghi', desc: 'Mozzarella, herkkusieni, portobello, parmesaani, mustapippuri, rucola, tryffeliöljy', price: '€8' },
+            { name: 'ai Funghi (Vegan)', desc: 'Vegan mozzarella, herkkusieni, portobello, vegan parmesaani, mustapippuri, rucola, tryffeliöljy', price: '€8', vegan: true },
             { name: 'Auramericana', desc: 'Tomaattikastike, mozzarella, palvikinkku, aurajuusto, ananas, basilika, oliiviöljy', price: '€10' }
         ];
 
         let orders = [];
+
+        // SHA-256 hash function
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         // Initialize the page
         function init() {
@@ -416,9 +446,11 @@
             });
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const password = document.getElementById('passwordInput').value;
-            if (password === CORRECT_PASSWORD) {
+            const hash = await sha256(password);
+            
+            if (hash === PASSWORD_HASH) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('partyContent').classList.remove('hidden');
                 showConfetti();
