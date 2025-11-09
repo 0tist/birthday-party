@@ -1,256 +1,513 @@
-import { useState, useEffect } from 'react';
-import { Pizza, PartyPopper, Wine, Heart, Lock } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Birthday Party! 🎉</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-export default function BirthdayParty() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [guestName, setGuestName] = useState('');
-  const [selectedPizza, setSelectedPizza] = useState('');
-  const [orders, setOrders] = useState([]);
-  const [showConfetti, setShowConfetti] = useState(false);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #6366f1 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-  const CORRECT_PASSWORD = 'pizza2025'; // Change this to your password
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-  const pizzaMenu = [
-    { name: 'Margherita', desc: 'Tomaattikastike, mozzarella, basilika, oliiviöljy', price: '€5', vegan: true },
-    { name: 'Margherita DOP', desc: 'Tomaattikastike, mozzarella di bufala, basilika, oliiviöljy', price: '€7' },
-    { name: 'Pepperoni', desc: 'Tomaattikastike, pepperoni, mozzarella, basilika, oliiviöljy', price: '€7' },
-    { name: 'Parmigiana', desc: 'Tomaattikastike, grillattu munakoiso, mozzarella, parmesaani, rucola, oliiviöljy', price: '€7', vegan: true },
-    { name: 'Diavola', desc: 'Tomaattikastike, \'nduja-makkara, mozzarella, parmesaani, chiliöljy, basilika', price: '€8' },
-    { name: 'ai Funghi', desc: 'Mozzarella, herkkusieni, portobello, parmesaani, mustapippuri, rucola, tryffeliöljy', price: '€8', vegan: true },
-    { name: 'Auramericana', desc: 'Tomaattikastike, mozzarella, palvikinkku, aurajuusto, ananas, basilika, oliiviöljy', price: '€10' }
-  ];
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadOrders();
-    }
-  }, [isAuthenticated]);
+        .login-container {
+            max-width: 450px;
+            margin: 100px auto;
+        }
 
-  const loadOrders = async () => {
-    try {
-      const result = await window.storage.list('order:', true);
-      if (result && result.keys) {
-        const orderPromises = result.keys.map(async key => {
-          const data = await window.storage.get(key, true);
-          return data ? JSON.parse(data.value) : null;
-        });
-        const loadedOrders = (await Promise.all(orderPromises)).filter(Boolean);
-        setOrders(loadedOrders);
-      }
-    } catch (error) {
-      console.log('No orders yet');
-    }
-  };
+        .lock-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: block;
+        }
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthenticated(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
-    } else {
-      alert('Wrong password! Try again 🍕');
-    }
-  };
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
 
-  const handleOrder = async (e) => {
-    e.preventDefault();
-    if (!guestName || !selectedPizza) {
-      alert('Please fill in your name and select a pizza!');
-      return;
-    }
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
 
-    const pizza = pizzaMenu.find(p => p.name === selectedPizza);
-    const order = {
-      name: guestName,
-      pizza: selectedPizza,
-      price: pizza.price,
-      timestamp: Date.now()
-    };
+        .text-center {
+            text-align: center;
+        }
 
-    try {
-      await window.storage.set(`order:${Date.now()}`, JSON.stringify(order), true);
-      await loadOrders();
-      setGuestName('');
-      setSelectedPizza('');
-      alert(`Thanks ${order.name}! Your ${pizza.name} is noted! 🍕`);
-    } catch (error) {
-      alert('Error saving order. Please try again!');
-    }
-  };
+        .party-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            display: block;
+        }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-500 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <Lock className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">🎉 Birthday Party! 🎉</h1>
-            <p className="text-gray-600">Enter the secret password to see the party details</p>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
-            />
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
-            >
-              Enter Party 🎊
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #d8b4fe;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-500 p-4">
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-bounce"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `-20px`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
-              }}
-            >
-              🎉
-            </div>
-          ))}
-        </div>
-      )}
+        input:focus, select:focus {
+            outline: none;
+            border-color: #a855f7;
+        }
 
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
-          <div className="text-center mb-8">
-            <PartyPopper className="w-20 h-20 mx-auto text-purple-500 mb-4" />
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4">
-              It's My Birthday! 🎂
-            </h1>
-            <p className="text-2xl text-gray-700 mb-6">Let's celebrate with pizza from Sotto Pizzeria!</p>
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .plan-box {
+            background: linear-gradient(135deg, #f3e8ff, #fce7f3);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .plan-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .pizza-menu {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .pizza-item {
+            border: 2px solid #e9d5ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .pizza-item:hover {
+            border-color: #a855f7;
+        }
+
+        .pizza-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .pizza-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .pizza-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .pizza-desc {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .order-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: linear-gradient(135deg, #f3e8ff, #fce7f3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .order-name {
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .order-price {
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .order-pizza {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .total-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e9d5ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-label {
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .total-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            position: fixed;
+            left: 50%;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
             
-            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">🎉 The Plan 🎉</h2>
-              <div className="space-y-3 text-left max-w-2xl mx-auto text-lg">
-                <p className="flex items-center gap-3">
-                  <Pizza className="text-orange-500" />
-                  <span><strong>Pizza Time:</strong> Order from Sotto Pizzeria Helsinki (menu below!)</span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <Wine className="text-purple-600" />
-                  <span><strong>I'm providing:</strong> Starters & drinks - get ready to party!</span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <Heart className="text-red-500" />
-                  <span><strong>Payment:</strong> I'll order everything together, but pizzas are split - you pay for yours!</span>
-                </p>
-              </div>
-            </div>
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
 
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 text-left">
-              <p className="text-gray-800 font-semibold">💛 Friendly reminder: I can't afford pizzas for everyone, but I want us all to eat together! I'll handle ordering so everything arrives at the same time. Just bring cash/Mobilepay for your pizza! 🍕</p>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen">
+            <div class="card login-container">
+                <div class="text-center">
+                    <svg class="lock-icon" fill="none" stroke="#a855f7" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <h1>🎉 Birthday Party! 🎉</h1>
+                    <p style="color: #6b7280; margin-bottom: 30px;">Enter the secret password to see the party details</p>
+                </div>
+                <input type="password" id="passwordInput" placeholder="Enter password">
+                <button onclick="handleLogin()">Enter Party 🎊</button>
             </div>
-          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Pizza className="text-orange-500" />
-              Sotto Pizzeria Menu
-            </h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {pizzaMenu.map((pizza, idx) => (
-                <div key={idx} className="border-2 border-purple-200 rounded-xl p-4 hover:border-purple-400 transition-all">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg text-gray-800">
-                      {pizza.name} {pizza.vegan && '🌱'}
-                    </h3>
-                    <span className="text-xl font-bold text-purple-600">{pizza.price}</span>
-                  </div>
-                  <p className="text-gray-600 text-sm">{pizza.desc}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-gray-500 mt-4">🌱 = Available vegan</p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">Place Your Order! 🍕</h2>
-              <form onSubmit={handleOrder} className="space-y-4">
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  placeholder="Your name"
-                  className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
-                />
-                <select
-                  value={selectedPizza}
-                  onChange={(e) => setSelectedPizza(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500"
-                >
-                  <option value="">Select your pizza</option>
-                  {pizzaMenu.map((pizza, idx) => (
-                    <option key={idx} value={pizza.name}>
-                      {pizza.name} - {pizza.price}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-red-600 transition-all"
-                >
-                  Add My Order! 🎉
-                </button>
-              </form>
-            </div>
-
-            <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">Who's Coming? 🎊</h2>
-              {orders.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No orders yet! Be the first! 🍕</p>
-              ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {orders.map((order, idx) => (
-                    <div key={idx} className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-800">{order.name}</span>
-                        <span className="text-purple-600 font-bold">{order.price}</span>
-                      </div>
-                      <div className="text-gray-600 text-sm">{order.pizza}</div>
+        <!-- Main Party Content -->
+        <div id="partyContent" class="hidden">
+            <!-- Header Card -->
+            <div class="card">
+                <div class="text-center">
+                    <svg class="party-icon" fill="none" stroke="#a855f7" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M5.8 11.3L2 22l10.7-3.79"></path>
+                        <path d="M4 3h.01"></path>
+                        <path d="M22 8h.01"></path>
+                        <path d="M15 2h.01"></path>
+                        <path d="M22 20h.01"></path>
+                        <path d="M22 2l-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"></path>
+                        <path d="M22 13l-1.77-.51a2 2 0 0 0-2.26 1.13v0c-.26.56-.97.87-1.58.68l-1.4-.47a2 2 0 0 0-2.5 1.84v.06"></path>
+                    </svg>
+                    <h1>It's My Birthday! 🎂</h1>
+                    <p style="font-size: 1.5rem; color: #374151; margin-bottom: 30px;">Let's celebrate with pizza from Sotto Pizzeria!</p>
+                    
+                    <div class="plan-box">
+                        <h2>🎉 The Plan 🎉</h2>
+                        <div class="plan-item">
+                            <span style="font-size: 1.5rem;">🍕</span>
+                            <span><strong>Pizza Time:</strong> Order from Sotto Pizzeria Helsinki (menu below!)</span>
+                        </div>
+                        <div class="plan-item">
+                            <span style="font-size: 1.5rem;">🍷</span>
+                            <span><strong>I'm providing:</strong> Starters & drinks - get ready to party!</span>
+                        </div>
+                        <div class="plan-item">
+                            <span style="font-size: 1.5rem;">❤️</span>
+                            <span><strong>Payment:</strong> I'll order everything together, but pizzas are split - you pay for yours!</span>
+                        </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              <div className="mt-4 pt-4 border-t-2 border-purple-200">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-gray-800">Total Guests:</span>
-                  <span className="text-2xl font-bold text-purple-600">{orders.length}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mt-6 text-center">
-          <p className="text-2xl text-gray-700">
-            Can't wait to celebrate with you all! 🎉🍕❤️
-          </p>
-          <p className="text-gray-500 mt-2">See you at the party!</p>
+                    <div class="warning-box">
+                        <p style="font-weight: 600; color: #1f2937;">💛 Friendly reminder: I can't afford pizzas for everyone, but I want us all to eat together! I'll handle ordering so everything arrives at the same time. Just bring cash/Mobilepay for your pizza! 🍕</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Grid -->
+            <div class="grid">
+                <!-- Pizza Menu -->
+                <div class="card">
+                    <h2>🍕 Sotto Pizzeria Menu</h2>
+                    <div class="pizza-menu" id="pizzaMenu"></div>
+                    <p style="color: #9ca3af; font-size: 0.9rem; margin-top: 15px;">🌱 = Available vegan</p>
+                </div>
+
+                <!-- Order Form and Guest List -->
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h2>Place Your Order! 🍕</h2>
+                        <input type="text" id="guestName" placeholder="Your name">
+                        <select id="pizzaSelect">
+                            <option value="">Select your pizza</option>
+                        </select>
+                        <button onclick="handleOrder()">Add My Order! 🎉</button>
+                    </div>
+
+                    <div class="card">
+                        <h2>Who's Coming? 🎊</h2>
+                        <div class="order-list" id="orderList">
+                            <div class="empty-state">No orders yet! Be the first! 🍕</div>
+                        </div>
+                        <div class="total-section">
+                            <span class="total-label">Total Guests:</span>
+                            <span class="total-count" id="totalGuests">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card text-center">
+                <p style="font-size: 1.5rem; color: #374151; margin-bottom: 10px;">
+                    Can't wait to celebrate with you all! 🎉🍕❤️
+                </p>
+                <p style="color: #9ca3af;">See you at the party!</p>
+            </div>
         </div>
-      </div>
     </div>
-  );
-}
+
+    <script>
+        const CORRECT_PASSWORD = 'pizza2025'; // Change this!
+        
+        const pizzaMenu = [
+            { name: 'Margherita', desc: 'Tomaattikastike, mozzarella, basilika, oliiviöljy', price: '€5', vegan: true },
+            { name: 'Margherita DOP', desc: 'Tomaattikastike, mozzarella di bufala, basilika, oliiviöljy', price: '€7' },
+            { name: 'Pepperoni', desc: 'Tomaattikastike, pepperoni, mozzarella, basilika, oliiviöljy', price: '€7' },
+            { name: 'Parmigiana', desc: 'Tomaattikastike, grillattu munakoiso, mozzarella, parmesaani, rucola, oliiviöljy', price: '€7', vegan: true },
+            { name: 'Diavola', desc: "Tomaattikastike, 'nduja-makkara, mozzarella, parmesaani, chiliöljy, basilika", price: '€8' },
+            { name: 'ai Funghi', desc: 'Mozzarella, herkkusieni, portobello, parmesaani, mustapippuri, rucola, tryffeliöljy', price: '€8', vegan: true },
+            { name: 'Auramericana', desc: 'Tomaattikastike, mozzarella, palvikinkku, aurajuusto, ananas, basilika, oliiviöljy', price: '€10' }
+        ];
+
+        let orders = [];
+
+        // Initialize the page
+        function init() {
+            renderPizzaMenu();
+            populatePizzaSelect();
+            
+            // Allow Enter key on password input
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+        }
+
+        function renderPizzaMenu() {
+            const menuContainer = document.getElementById('pizzaMenu');
+            menuContainer.innerHTML = pizzaMenu.map(pizza => `
+                <div class="pizza-item">
+                    <div class="pizza-header">
+                        <span class="pizza-name">${pizza.name} ${pizza.vegan ? '🌱' : ''}</span>
+                        <span class="pizza-price">${pizza.price}</span>
+                    </div>
+                    <p class="pizza-desc">${pizza.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function populatePizzaSelect() {
+            const select = document.getElementById('pizzaSelect');
+            pizzaMenu.forEach(pizza => {
+                const option = document.createElement('option');
+                option.value = pizza.name;
+                option.textContent = `${pizza.name} - ${pizza.price}`;
+                select.appendChild(option);
+            });
+        }
+
+        function handleLogin() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === CORRECT_PASSWORD) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('partyContent').classList.remove('hidden');
+                showConfetti();
+                loadOrders();
+            } else {
+                alert('Wrong password! Try again 🍕');
+            }
+        }
+
+        function showConfetti() {
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.textContent = '🎉';
+                    confetti.style.position = 'fixed';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-20px';
+                    confetti.style.fontSize = '24px';
+                    confetti.style.animation = `confetti-fall ${2 + Math.random() * 2}s ease-out forwards`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+
+        async function loadOrders() {
+            const storedOrders = localStorage.getItem('birthdayOrders');
+            if (storedOrders) {
+                orders = JSON.parse(storedOrders);
+                renderOrders();
+            }
+        }
+
+        function saveOrders() {
+            localStorage.setItem('birthdayOrders', JSON.stringify(orders));
+        }
+
+        function handleOrder() {
+            const name = document.getElementById('guestName').value.trim();
+            const pizzaName = document.getElementById('pizzaSelect').value;
+
+            if (!name || !pizzaName) {
+                alert('Please fill in your name and select a pizza!');
+                return;
+            }
+
+            const pizza = pizzaMenu.find(p => p.name === pizzaName);
+            const order = {
+                name: name,
+                pizza: pizzaName,
+                price: pizza.price,
+                timestamp: Date.now()
+            };
+
+            orders.push(order);
+            saveOrders();
+            renderOrders();
+
+            document.getElementById('guestName').value = '';
+            document.getElementById('pizzaSelect').value = '';
+
+            alert(`Thanks ${name}! Your ${pizzaName} is noted! 🍕`);
+        }
+
+        function renderOrders() {
+            const orderList = document.getElementById('orderList');
+            const totalGuests = document.getElementById('totalGuests');
+
+            if (orders.length === 0) {
+                orderList.innerHTML = '<div class="empty-state">No orders yet! Be the first! 🍕</div>';
+                totalGuests.textContent = '0';
+                return;
+            }
+
+            orderList.innerHTML = orders.map(order => `
+                <div class="order-item">
+                    <div class="order-header">
+                        <span class="order-name">${order.name}</span>
+                        <span class="order-price">${order.price}</span>
+                    </div>
+                    <div class="order-pizza">${order.pizza}</div>
+                </div>
+            `).join('');
+
+            totalGuests.textContent = orders.length;
+        }
+
+        // Initialize when page loads
+        init();
+    </script>
+</body>
+</html>
