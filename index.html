@@ -340,6 +340,7 @@
 
                     <div class="warning-box">
                         <p style="font-weight: 600; color: #1f2937;">💛 Friendly reminder: I can't afford pizzas for everyone, but I want us all to eat together! I'll handle ordering so everything arrives at the same time. Just bring cash/Mobilepay for your pizza! 🍕</p>
+                        <p style="font-weight: 500; color: #6b7280; margin-top: 10px; font-size: 0.9rem;">✨ Your order will be visible to everyone on this page in real-time!</p>
                     </div>
                 </div>
             </div>
@@ -366,6 +367,7 @@
 
                     <div class="card">
                         <h2>Who's Coming? 🎊</h2>
+                        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 15px;">Updates automatically every 5 seconds ✨</p>
                         <div class="order-list" id="orderList">
                             <div class="empty-state">No orders yet! Be the first! 🍕</div>
                         </div>
@@ -459,7 +461,9 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('partyContent').classList.remove('hidden');
                 showConfetti();
-                loadOrders();
+                await loadOrders();
+                // Auto-refresh orders every 5 seconds
+                setInterval(loadOrders, 5000);
             } else {
                 alert('Wrong password! Try again 🍕');
             }
@@ -482,18 +486,34 @@
         }
 
         async function loadOrders() {
-            const storedOrders = localStorage.getItem('birthdayOrders');
-            if (storedOrders) {
-                orders = JSON.parse(storedOrders);
-                renderOrders();
+            try {
+                const result = await window.storage.list('order:', true);
+                if (result && result.keys) {
+                    const orderPromises = result.keys.map(async key => {
+                        const data = await window.storage.get(key, true);
+                        return data ? JSON.parse(data.value) : null;
+                    });
+                    orders = (await Promise.all(orderPromises)).filter(Boolean);
+                    // Sort by timestamp
+                    orders.sort((a, b) => a.timestamp - b.timestamp);
+                    renderOrders();
+                }
+            } catch (error) {
+                console.log('No orders yet or error loading:', error);
             }
         }
 
-        function saveOrders() {
-            localStorage.setItem('birthdayOrders', JSON.stringify(orders));
+        async function saveOrder(order) {
+            try {
+                await window.storage.set(`order:${order.timestamp}`, JSON.stringify(order), true);
+                return true;
+            } catch (error) {
+                console.error('Error saving order:', error);
+                return false;
+            }
         }
 
-        function handleOrder() {
+        async function handleOrder() {
             const name = document.getElementById('guestName').value.trim();
             const pizzaName = document.getElementById('pizzaSelect').value;
 
@@ -510,14 +530,15 @@
                 timestamp: Date.now()
             };
 
-            orders.push(order);
-            saveOrders();
-            renderOrders();
-
-            document.getElementById('guestName').value = '';
-            document.getElementById('pizzaSelect').value = '';
-
-            alert(`Thanks ${name}! Your ${pizzaName} is noted! 🍕`);
+            const saved = await saveOrder(order);
+            if (saved) {
+                await loadOrders();
+                document.getElementById('guestName').value = '';
+                document.getElementById('pizzaSelect').value = '';
+                alert(`Thanks ${name}! Your ${pizzaName} is noted! 🍕`);
+            } else {
+                alert('Error saving order. Please try again!');
+            }
         }
 
         function renderOrders() {
