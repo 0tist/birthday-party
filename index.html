@@ -340,7 +340,7 @@
 
                     <div class="warning-box">
                         <p style="font-weight: 600; color: #1f2937;">💛 Friendly reminder: I can't afford pizzas for everyone, but I want us all to eat together! I'll handle ordering so everything arrives at the same time. Just bring cash/Mobilepay for your pizza! 🍕</p>
-                        <p style="font-weight: 500; color: #6b7280; margin-top: 10px; font-size: 0.9rem;">✨ Your order will be visible to everyone on this page in real-time!</p>
+                        <p style="font-weight: 500; color: #6b7280; margin-top: 10px; font-size: 0.9rem;">✨ Orders are shared in real-time - everyone can see what others ordered!</p>
                     </div>
                 </div>
             </div>
@@ -367,7 +367,7 @@
 
                     <div class="card">
                         <h2>Who's Coming? 🎊</h2>
-                        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 15px;">Updates automatically every 5 seconds ✨</p>
+                        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 15px;">Updates automatically every 10 seconds ✨</p>
                         <div class="order-list" id="orderList">
                             <div class="empty-state">No orders yet! Be the first! 🍕</div>
                         </div>
@@ -395,6 +395,9 @@
         // To change password: use an online SHA-256 generator with your desired password
         // Current password hash is for: "pizza2025"
         const PASSWORD_HASH = '0d1b7fb5688c036c0b176e06976f00f04bab68f84a3ec54ac3b699af6ad261c7';
+        
+        // REPLACE THIS WITH YOUR GOOGLE SHEETS WEB APP URL
+        const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwz4DSxusqimLnArHxwtd14KKasQTK2VRw-O4asIK8BzPiSBehCO0V-dFAgW8t3ffXs/exec';
         
         const pizzaMenu = [
             { name: 'Margherita', desc: 'Tomaattikastike, mozzarella, basilika, oliiviöljy', price: '€5' },
@@ -462,8 +465,8 @@
                 document.getElementById('partyContent').classList.remove('hidden');
                 showConfetti();
                 await loadOrders();
-                // Auto-refresh orders every 5 seconds
-                setInterval(loadOrders, 5000);
+                // Auto-refresh orders every 10 seconds
+                setInterval(loadOrders, 10000);
             } else {
                 alert('Wrong password! Try again 🍕');
             }
@@ -487,29 +490,45 @@
 
         async function loadOrders() {
             try {
-                const result = await window.storage.list('order:', true);
-                if (result && result.keys) {
-                    const orderPromises = result.keys.map(async key => {
-                        const data = await window.storage.get(key, true);
-                        return data ? JSON.parse(data.value) : null;
-                    });
-                    orders = (await Promise.all(orderPromises)).filter(Boolean);
-                    // Sort by timestamp
-                    orders.sort((a, b) => a.timestamp - b.timestamp);
+                const response = await fetch(SHEETS_URL);
+                const data = await response.json();
+                orders = data.orders || [];
+                orders.sort((a, b) => a.timestamp - b.timestamp);
+                renderOrders();
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                // Fallback to localStorage
+                const stored = localStorage.getItem('birthdayOrders');
+                if (stored) {
+                    orders = JSON.parse(stored);
                     renderOrders();
                 }
-            } catch (error) {
-                console.log('No orders yet or error loading:', error);
             }
         }
 
         async function saveOrder(order) {
             try {
-                await window.storage.set(`order:${order.timestamp}`, JSON.stringify(order), true);
-                return true;
+                const response = await fetch(SHEETS_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(order)
+                });
+                
+                if (response.ok) {
+                    // Also save locally as backup
+                    orders.push(order);
+                    localStorage.setItem('birthdayOrders', JSON.stringify(orders));
+                    return true;
+                }
+                return false;
             } catch (error) {
                 console.error('Error saving order:', error);
-                return false;
+                // Save locally as fallback
+                orders.push(order);
+                localStorage.setItem('birthdayOrders', JSON.stringify(orders));
+                return true;
             }
         }
 
