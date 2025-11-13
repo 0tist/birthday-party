@@ -325,10 +325,6 @@
                             <span><strong>I'm providing:</strong> Starters, snacks, and some mysterious drinks!</span>
                         </div>
                         <div class="plan-item">
-                            <span style="font-size: 1.5rem;">🍺</span>
-                            <span><strong>BYOB:</strong> Feel free to bring your own alcohol if you want!</span>
-                        </div>
-                        <div class="plan-item">
                             <span style="font-size: 1.5rem;">❤️</span>
                             <span><strong>Payment:</strong> I'll order everything together, but pizzas are split - you pay for yours!</span>
                         </div>
@@ -490,7 +486,10 @@
 
         async function loadOrders() {
             try {
-                const response = await fetch(SHEETS_URL);
+                const response = await fetch(SHEETS_URL + '?action=get&t=' + Date.now());
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders');
+                }
                 const data = await response.json();
                 orders = data.orders || [];
                 orders.sort((a, b) => a.timestamp - b.timestamp);
@@ -508,23 +507,29 @@
 
         async function saveOrder(order) {
             try {
-                const response = await fetch(SHEETS_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(order)
+                // Use URL parameters instead of POST body for better compatibility
+                const params = new URLSearchParams({
+                    action: 'add',
+                    name: order.name,
+                    pizza: order.pizza,
+                    price: order.price,
+                    timestamp: order.timestamp
                 });
                 
-                if (response.ok) {
-                    // Also save locally as backup
-                    orders.push(order);
-                    localStorage.setItem('birthdayOrders', JSON.stringify(orders));
-                    return true;
-                }
-                return false;
+                const response = await fetch(SHEETS_URL + '?' + params.toString(), {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                
+                console.log('Save response:', response.status);
+                
+                // Also save locally as backup
+                orders.push(order);
+                localStorage.setItem('birthdayOrders', JSON.stringify(orders));
+                return true;
             } catch (error) {
                 console.error('Error saving order:', error);
+                alert('Could not save to shared list, but saved locally. Error: ' + error.message);
                 // Save locally as fallback
                 orders.push(order);
                 localStorage.setItem('birthdayOrders', JSON.stringify(orders));
